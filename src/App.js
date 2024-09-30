@@ -13,11 +13,15 @@ import {
   List,
   ListItem,
   ListItemText,
+  IconButton,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
+  Alert,
 } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete'; // Import delete icon
 
 function FoodManager({ addFood, onClose }) {
   const [name, setName] = useState('');
@@ -97,14 +101,21 @@ function DailyIntake({ foods }) {
     const food = foods.find((f) => f.name === selectedFood);
     if (food && grams) {
       const intake = {
+        id: Date.now(), // Use timestamp as a unique ID
         name: food.name,
         grams: parseFloat(grams),
         calories: food.caloriesPerGram * grams,
         protein: food.proteinPerGram * grams,
+        time: new Date().toLocaleTimeString(), // Add time for each entry
       };
       setDailyFood([...dailyFood, intake]);
       setGrams('');
     }
+  };
+
+  const deleteDailyEntry = (id) => {
+    const updatedDailyFood = dailyFood.filter((item) => item.id !== id);
+    setDailyFood(updatedDailyFood); // Update dailyFood and localStorage
   };
 
   const resetDailyIntake = () => {
@@ -142,29 +153,43 @@ function DailyIntake({ foods }) {
       <Button variant="contained" color="primary" onClick={addDailyFood} sx={{ marginBottom: 4 }}>
         Add
       </Button>
-      <Button variant="outlined" color="error" onClick={resetDailyIntake} sx={{ marginBottom: 4, marginLeft:1 }}>
+      <Button variant="outlined" color="error" onClick={resetDailyIntake} sx={{ marginBottom: 4, marginLeft: 1 }}>
         Reset Daily Intake
       </Button>
 
       <Typography variant="h5" gutterBottom>
         Today's Intake
       </Typography>
+      <Alert icon={false} severity="success">
+        <Typography variant="h6">
+          Total Calories: <b> {totalCalories.toFixed()}</b>
+        </Typography>
+        <Typography variant="h6">
+          Total Protein: <b>{totalProtein.toFixed()}g</b>
+        </Typography>
+      </Alert>
+      {/* <Divider /> */}
       <List>
-        {dailyFood.map((item, index) => (
-          <ListItem key={index}>
-            <ListItemText
-              primary={`${item.grams}g ${item.name}`}
-              secondary={`Calories: ${item.calories.toFixed(2)}, Protein: ${item.protein.toFixed(2)}g`}
-            />
-          </ListItem>
+        {dailyFood.map((item) => (
+          <>
+            <ListItem
+              key={item.id}
+              secondaryAction={
+                <IconButton edge="end" aria-label="delete" onClick={() => deleteDailyEntry(item.id)}>
+                  <DeleteIcon />
+                </IconButton>
+              }
+            >
+              <ListItemText
+                primary={`${item.grams}g ${item.name}`}
+                secondary={`Calories: ${item.calories.toFixed(2)}, Protein: ${item.protein.toFixed(2)}g, Time: ${new Date(item.id).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}`}
+              />
+            </ListItem>
+            <Divider />
+          </>
         ))}
       </List>
-      <Typography variant="h6">
-        Total Calories: <b> {totalCalories.toFixed()}</b>
-      </Typography>
-      <Typography variant="h6">
-        Total Protein: <b>{totalProtein.toFixed()}g</b>
-      </Typography>
+
     </Box>
   );
 }
@@ -197,12 +222,8 @@ function App() {
 
   return (
     <Container sx={{ paddingTop: 4 }}>
-      {/* <Typography variant="h2" gutterBottom align="center">
-        Calorie and Protein Counter
-      </Typography> */}
-
       {/* Add New Food Button */}
-      <Button size='large' sx={{ width: "93%", position: "fixed", bottom: "20px" }} variant="contained" color="primary" onClick={handleClickOpen}>
+      <Button size='large' sx={{ width: "93%", position: "fixed", bottom: "20px", zIndex: 1 }} variant="contained" color="primary" onClick={handleClickOpen}>
         Add New Food
       </Button>
 
